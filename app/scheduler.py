@@ -36,11 +36,11 @@ def _row(job_id, operation_id, machine_id, start, end):
     }
 
 
-def _fifo(scenario, floor, frozen, outage, interrupted):
+def _fifo(scenario, floor, frozen, outage, release_times):
     """Dispatch available operations by release time, then input job order."""
     ready_at = {machine: floor for machine in scenario["machines"]}
     if outage:
-        ready_at[outage["machine_id"]] = outage["end"]
+        ready_at[outage["machine_id"]] = max(floor, outage["end"])
     for row in frozen.values():
         machine = row["machine_id"]
         ready_at[machine] = max(ready_at[machine], row["end"])
@@ -59,7 +59,7 @@ def _fifo(scenario, floor, frozen, outage, interrupted):
                     job_ready[index] = max(job_ready[index], frozen[key]["end"])
                     positions[index] += 1
                     continue
-                release = max(job_ready[index], interrupted.get(key, floor))
+                release = max(job_ready[index], release_times.get(key, floor))
                 start, machine = min(
                     (max(release, ready_at[choice]), choice) for choice in operation["machines"]
                 )
@@ -78,10 +78,15 @@ def _fifo(scenario, floor, frozen, outage, interrupted):
     return {"operations": _sorted_rows(rows), "metrics": _plan_metrics(scenario, rows)}
 
 
-def _optimize(scenario, floor, frozen, outage, interrupted, baseline):
+def _optimize(scenario, floor, frozen, outage, release_times, baseline):
     model = cp_model.CpModel()
     last_fixed_end = max((row["end"] for row in frozen.values()), default=floor)
-    last_release = max(last_fixed_end, outage["end"] if outage else floor)
+    last_release = max(
+        floor,
+        last_fixed_end,
+        outage["end"] if outage else floor,
+        max(release_times.values(), default=floor),
+    )
     remaining_duration = sum(
         operation["duration"]
         for job in scenario["jobs"]
@@ -120,7 +125,7 @@ def _optimize(scenario, floor, frozen, outage, interrupted, baseline):
                     model.new_fixed_size_interval_var(start, duration, name)
                 )
             else:
-                release = interrupted.get(key, floor)
+                release = max(floor, release_times.get(key, floor))
                 start = model.new_int_var(release, horizon - duration, f"{name}/start")
                 end = model.new_int_var(release + duration, horizon, f"{name}/end")
                 model.add(end == start + duration)
@@ -173,40 +178,9 @@ def _optimize(scenario, floor, frozen, outage, interrupted, baseline):
     return ("optimal" if status == cp_model.OPTIMAL else "feasible"), _sorted_rows(rows)
 
 
-def solve(scenario: dict, outage: dict | None = None) -> dict:
-    """Plan a validated scenario with optional half-open machine downtime.
-
-    An affected operation in progress is restarted after the outage. The two
-    plans are compared from the same optimized history at the outage boundary.
-    """
-    frozen = {}
-    interrupted = {}
-    interruptions = []
-    floor = 0
-    if outage:
-        initial = solve(scenario)
-        if not initial["operations"]:
-            return {
-                "status": initial["status"],
-                "operations": [],
-                "metrics": None,
-                "baseline": None,
-                "interruptions": [],
-            }
-
-        floor = outage["start"]
-        for row in initial["operations"]:
-            if row["start"] >= floor:
-                continue
-            key = (row["job_id"], row["operation_id"])
-            if row["machine_id"] == outage["machine_id"] and row["end"] > floor:
-                interrupted[key] = outage["end"]
-                interruptions.append({**row, "interrupted_at": floor})
-            else:
-                frozen[key] = row
-
-    baseline = _fifo(scenario, floor, frozen, outage, interrupted)
-    status, operations = _optimize(scenario, floor, frozen, outage, interrupted, baseline)
+def _schedule(scenario, event_time, frozen, outage, release_times, interruptions):
+    baseline = _fifo(scenario, event_time, frozen, outage, release_times)
+    status, operations = _optimize(scenario, event_time, frozen, outage, release_times, baseline)
     return {
         "status": status,
         "operations": operations,
@@ -214,3 +188,53 @@ def solve(scenario: dict, outage: dict | None = None) -> dict:
         "baseline": baseline,
         "interruptions": interruptions,
     }
+
+
+def replan(
+    scenario: dict,
+    previous: dict,
+    event_time: int,
+    outage: dict | None = None,
+    release_times: dict[tuple[str, str], int] | None = None,
+    *,
+    new_outage: bool = False,
+) -> dict:
+    """Plan from the persisted operation timeline at a new event boundary."""
+    if new_outage and (outage is None or outage["start"] != event_time):
+        raise ValueError("A new outage must begin at the replanning time")
+
+    interruptions = list(previous["interruptions"])
+    if not previous["operations"]:
+        return {
+            "status": previous["status"],
+            "operations": [],
+            "metrics": None,
+            "baseline": None,
+            "interruptions": interruptions,
+        }
+
+    frozen = {}
+    for row in previous["operations"]:
+        if row["start"] >= event_time:
+            continue
+        if new_outage and row["machine_id"] == outage["machine_id"] and row["end"] > event_time:
+            interruptions.append({**row, "interrupted_at": event_time})
+        else:
+            frozen[row["job_id"], row["operation_id"]] = row
+
+    releases = dict(release_times or {})
+    if outage:
+        for row in interruptions:
+            if row["machine_id"] == outage["machine_id"] and row["interrupted_at"] == outage["start"]:
+                key = (row["job_id"], row["operation_id"])
+                releases[key] = max(releases.get(key, event_time), outage["end"])
+
+    return _schedule(scenario, event_time, frozen, outage, releases, interruptions)
+
+
+def solve(scenario: dict, outage: dict | None = None) -> dict:
+    """Plan a validated scenario with optional half-open machine downtime."""
+    initial = _schedule(scenario, 0, {}, None, {}, [])
+    if outage:
+        return replan(scenario, initial, outage["start"], outage, new_outage=True)
+    return initial

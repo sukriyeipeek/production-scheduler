@@ -24,6 +24,17 @@
       <p id="status" class="status" role="status">Yükleniyor</p>
     </div>
     <div id="error" class="error" role="alert" hidden></div>
+    <section class="panel workspace" aria-label="Senaryo sürümleri">
+      <div class="version-group">
+        <label for="history">Plan sürümü</label>
+        <select id="history" disabled></select>
+        <span id="version-note" role="status"></span>
+      </div>
+      <div class="workspace-actions">
+        <button class="secondary" id="load-head" type="button" disabled>Güncel planı yükle</button>
+        <button class="secondary" id="new-workspace" type="button" disabled>Yeni senaryo</button>
+      </div>
+    </section>
     <div class="layout">
       <section class="panel chart-panel" aria-labelledby="chart-heading">
         <div class="panel-heading">
@@ -45,6 +56,7 @@
           </ul>
         </div>
       </section>
+      <aside class="control-stack" aria-label="Planı güncelle">
       <section class="panel controls" aria-labelledby="outage-heading">
         <h2 id="outage-heading">Makine arızası</h2>
         <p>Arıza aralığını gir. Devam eden işler korunur, arızanın kestiği operasyon baştan planlanır.</p>
@@ -56,9 +68,26 @@
             <div><label for="outage-end">Bitiş (dk)</label><input id="outage-end" name="end" type="number" inputmode="numeric" min="1" step="1" value="40" required></div>
           </div>
           <button class="primary" id="replan" type="submit" disabled>Yeniden planla</button>
-          <button class="secondary" id="reset-plan" type="button" disabled>İlk plana dön</button>
         </form>
       </section>
+      <section class="panel controls" aria-labelledby="urgent-heading">
+        <h2 id="urgent-heading">Acil sipariş</h2>
+        <p>Bir operasyon ekle ve mevcut planı güncelle.</p>
+        <form id="urgent-form">
+          <label for="job-id">Sipariş kodu</label>
+          <input id="job-id" type="text" value="ACIL-01" maxlength="40" required disabled>
+          <div class="time-inputs">
+            <div><label for="job-arrival">Geliş (dk)</label><input id="job-arrival" type="number" min="0" step="1" value="45" required disabled></div>
+            <div><label for="job-due">Teslim (dk)</label><input id="job-due" type="number" min="0" step="1" value="70" required disabled></div>
+          </div>
+          <div class="time-inputs">
+            <div><label for="job-machine">Makine</label><select id="job-machine" required disabled></select></div>
+            <div><label for="job-duration">Süre (dk)</label><input id="job-duration" type="number" min="1" step="1" value="6" required disabled></div>
+          </div>
+          <button class="primary" id="add-job" type="submit" disabled>Siparişi ekle</button>
+        </form>
+      </section>
+      </aside>
     </div>
     <section class="panel metrics" aria-labelledby="metrics-heading">
       <div class="panel-heading"><div><h2 id="metrics-heading">Plan karşılaştırması</h2><p>Optimize edilmiş plan ve geliş sıralı plan (FIFO)</p></div></div>

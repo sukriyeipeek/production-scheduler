@@ -16,6 +16,7 @@ Identifier = Annotated[
 Time = Annotated[int, Field(ge=0, le=MAX_TIME)]
 Duration = Annotated[int, Field(ge=1, le=MAX_DURATION)]
 MachineList = Annotated[list[Identifier], Field(min_length=1, max_length=MAX_MACHINES)]
+Version = Annotated[int, Field(ge=1, le=2**63 - 1)]
 
 
 class RequestModel(BaseModel):
@@ -121,3 +122,39 @@ class ScheduleResult(BaseModel):
     metrics: ScheduleMetrics | None
     baseline: Baseline | None
     interruptions: list[Interruption]
+
+
+class WorkspaceCreate(RequestModel):
+    scenario: Scenario
+
+
+class WorkspaceEvent(RequestModel):
+    expected_version: Version
+    event_type: Literal["outage", "urgent_job"]
+    event_time: Time
+    outage: Outage | None = None
+    job: Job | None = None
+
+    @model_validator(mode="after")
+    def validate_event(self) -> Self:
+        if self.event_type == "outage":
+            if self.outage is None or self.job is not None:
+                raise ValueError("An outage event requires an outage and accepts no job.")
+            if self.outage.start != self.event_time:
+                raise ValueError("The outage must start at event_time.")
+        elif self.job is None or self.outage is not None:
+            raise ValueError("An urgent job event requires a job and accepts no outage.")
+        return self
+
+
+class WorkspaceVersion(BaseModel):
+    version: Version
+    event_type: Literal["initial", "outage", "urgent_job"]
+    event_time: Time
+
+
+class WorkspaceSnapshot(WorkspaceVersion):
+    workspace_id: str
+    scenario: Scenario
+    outage: Outage | None
+    result: ScheduleResult

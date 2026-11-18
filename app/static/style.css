@@ -40,6 +40,14 @@ h2 { font-size: 1.09rem; letter-spacing: -.022em; }
 .error { background: #fff0e8; border: 1px solid #e8b79d; color: #742e15; padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(245px, 280px); gap: 20px; align-items: start; }
 .panel { min-width: 0; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; box-shadow: 0 2px 4px #172c2410; }
+.workspace { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 15px; margin-bottom: 16px; }
+.workspace-actions, .version-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.workspace label, .workspace select, .workspace span { font-size: .8rem; }
+.workspace label { font-weight: 700; }
+.workspace span { color: var(--muted); }
+.workspace select { min-height: 36px; max-width: 100%; border: 1px solid #bdccc5; border-radius: 6px; color: #263c34; background: var(--paper); padding: 0 7px; }
+.workspace-actions .secondary { width: auto; padding-inline: 11px; margin: 0; min-height: 36px; }
+.control-stack { display: grid; min-width: 0; gap: 14px; }
 .panel-heading { padding: 19px 20px 16px; }
 .switch { display: flex; flex: none; background: #eef2ef; border: 1px solid var(--line); border-radius: 7px; padding: 3px; gap: 3px; }
 .switch button { border: 1px solid transparent; border-radius: 4px; background: transparent; color: #465957; font-weight: 700; font-size: .78rem; cursor: pointer; padding: 6px 9px; }

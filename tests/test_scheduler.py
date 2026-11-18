@@ -1,4 +1,4 @@
-from app.scheduler import solve
+from app.scheduler import replan, solve
 
 
 def test_optimizer_prioritizes_due_date_ahead_of_fifo():
@@ -93,3 +93,69 @@ def test_tardiness_can_take_priority_over_makespan():
     assert result["status"] == "optimal"
     assert result["metrics"] == {"makespan": 12, "total_tardiness": 0}
     assert result["baseline"]["metrics"] == {"makespan": 7, "total_tardiness": 2}
+
+
+def test_urgent_job_uses_persisted_history_and_respects_release_time():
+    scenario = {
+        "machines": ["mill"],
+        "jobs": [
+            {"id": "first", "due": 20, "operations": [
+                {"id": "mill", "machines": ["mill"], "duration": 3},
+            ]},
+            {"id": "due-soon", "due": 2, "operations": [
+                {"id": "mill", "machines": ["mill"], "duration": 2},
+            ]},
+        ],
+    }
+    original = solve(scenario)
+    previous = {**original, **original["baseline"]}
+    scenario = {**scenario, "jobs": [*scenario["jobs"], {
+        "id": "urgent", "due": 2, "operations": [
+            {"id": "mill", "machines": ["mill"], "duration": 1},
+        ],
+    }]}
+
+    result = replan(scenario, previous, event_time=1, release_times={("urgent", "mill"): 10})
+
+    assert result["status"] == "optimal"
+    assert previous["operations"][0]["job_id"] == "first"
+    assert original["operations"][0]["job_id"] == "due-soon"
+    for plan in (result, result["baseline"]):
+        assert plan["operations"][0] == previous["operations"][0]
+        assert plan["operations"][-1]["job_id"] == "urgent"
+        assert plan["operations"][-1]["start"] == 10
+
+
+def test_urgent_event_preserves_prior_interruption_and_restart_floor():
+    scenario = {
+        "machines": ["mill", "backup"],
+        "jobs": [{"id": "part", "due": 5, "operations": [
+            {"id": "mill", "machines": ["mill", "backup"], "duration": 5},
+        ]}],
+    }
+    original = solve(scenario)
+    prior_row = {**original["operations"][0], "machine_id": "mill"}
+    previous = {**original, "operations": [prior_row]}
+    outage = {"machine_id": "mill", "start": 2, "end": 6}
+    interrupted = replan(scenario, previous, 2, outage, new_outage=True)
+    scenario = {**scenario, "jobs": [*scenario["jobs"], {
+        "id": "urgent", "due": 4, "operations": [
+            {"id": "work", "machines": ["backup"], "duration": 1},
+        ],
+    }]}
+
+    during = replan(scenario, interrupted, 3, outage)
+
+    assert during["interruptions"] == interrupted["interruptions"] == [
+        {**prior_row, "interrupted_at": 2}
+    ]
+    for plan in (during, during["baseline"]):
+        operations = {row["job_id"]: row for row in plan["operations"]}
+        assert operations["urgent"]["start"] == 3
+        assert operations["part"]["start"] == 6
+        assert operations["part"]["end"] == 11
+
+    after = replan(scenario, during, 7, outage)
+    assert after["operations"] == during["operations"]
+    assert after["baseline"]["operations"] == during["operations"]
+    assert after["interruptions"] == during["interruptions"]

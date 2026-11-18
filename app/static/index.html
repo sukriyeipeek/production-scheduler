@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Makine arızasını simüle et ve üretim çizelgesini yeniden hesapla.">
+  <title>Üretim Planlama</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span> Üretim Planlama</a>
+      <a class="docs" href="/docs">API belgeleri <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="page-heading">
+      <div>
+        <h1>Üretim çizelgesi</h1>
+        <p id="scenario-summary">Örnek senaryo yükleniyor…</p>
+      </div>
+      <p id="status" class="status" role="status">Yükleniyor</p>
+    </div>
+    <div id="error" class="error" role="alert" hidden></div>
+    <div class="layout">
+      <section class="panel chart-panel" aria-labelledby="chart-heading">
+        <div class="panel-heading">
+          <div><h2 id="chart-heading">Makine çizelgesi</h2><p id="plan-caption">Vardiya başlangıcından itibaren dakika</p></div>
+          <div class="switch" role="group" aria-label="Görüntülenen plan">
+            <button type="button" id="optimized-view" aria-pressed="true" disabled>Optimize</button>
+            <button type="button" id="fifo-view" aria-pressed="false" disabled>FIFO</button>
+          </div>
+        </div>
+        <div id="chart" class="chart" aria-label="Makine, operasyon ve zaman çizelgesi">
+          <p class="empty">Çizelge hazırlanıyor…</p>
+        </div>
+        <div class="chart-footer">
+          <p id="operation-detail" role="status">Bir operasyon seçerek ayrıntılarını gör.</p>
+          <ul class="legend" id="legend" aria-label="Çizelge işaretleri">
+            <li><i class="legend-operation" aria-hidden="true"></i> Operasyon</li>
+            <li><i class="legend-outage" aria-hidden="true"></i> Arıza</li>
+            <li id="interruption-legend" hidden><i class="legend-interruption" aria-hidden="true"></i> Kesintiye uğrayan işlem</li>
+          </ul>
+        </div>
+      </section>
+      <section class="panel controls" aria-labelledby="outage-heading">
+        <h2 id="outage-heading">Makine arızası</h2>
+        <p>Arıza aralığını gir. Devam eden işler korunur, arızanın kestiği operasyon baştan planlanır.</p>
+        <form id="outage-form">
+          <label for="machine">Makine</label>
+          <select id="machine" name="machine" required disabled></select>
+          <div class="time-inputs">
+            <div><label for="outage-start">Başlangıç (dk)</label><input id="outage-start" name="start" type="number" inputmode="numeric" min="0" step="1" value="20" required></div>
+            <div><label for="outage-end">Bitiş (dk)</label><input id="outage-end" name="end" type="number" inputmode="numeric" min="1" step="1" value="40" required></div>
+          </div>
+          <button class="primary" id="replan" type="submit" disabled>Yeniden planla</button>
+          <button class="secondary" id="reset-plan" type="button" disabled>İlk plana dön</button>
+        </form>
+      </section>
+    </div>
+    <section class="panel metrics" aria-labelledby="metrics-heading">
+      <div class="panel-heading"><div><h2 id="metrics-heading">Plan karşılaştırması</h2><p>Optimize edilmiş plan ve geliş sıralı plan (FIFO)</p></div></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Ölçüt</th><th scope="col">Optimize</th><th scope="col">FIFO</th><th scope="col">Optimize − FIFO</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Tüm işlerin bitişi</th><td id="optimized-makespan">—</td><td id="fifo-makespan">—</td><td id="delta-makespan">—</td></tr>
+            <tr><th scope="row">Toplam teslim gecikmesi</th><td id="optimized-total_tardiness">—</td><td id="fifo-total_tardiness">—</td><td id="delta-total_tardiness">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

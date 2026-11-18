@@ -1,0 +1,25 @@
+{
+  "machines": ["M1", "M2", "M3"],
+  "jobs": [
+    {"id": "J01", "due": 22, "operations": [{"id": "O1", "duration": 5, "machines": ["M1"]}, {"id": "O2", "duration": 7, "machines": ["M2"]}]},
+    {"id": "J02", "due": 25, "operations": [{"id": "O1", "duration": 6, "machines": ["M1"]}, {"id": "O2", "duration": 5, "machines": ["M3"]}]},
+    {"id": "J03", "due": 28, "operations": [{"id": "O1", "duration": 4, "machines": ["M2"]}, {"id": "O2", "duration": 8, "machines": ["M3"]}]},
+    {"id": "J04", "due": 32, "operations": [{"id": "O1", "duration": 7, "machines": ["M1"]}, {"id": "O2", "duration": 6, "machines": ["M2", "M3"]}]},
+    {"id": "J05", "due": 35, "operations": [{"id": "O1", "duration": 5, "machines": ["M1"]}, {"id": "O2", "duration": 9, "machines": ["M2"]}]},
+    {"id": "J06", "due": 39, "operations": [{"id": "O1", "duration": 5, "machines": ["M2"]}, {"id": "O2", "duration": 6, "machines": ["M3"]}]},
+    {"id": "J07", "due": 44, "operations": [{"id": "O1", "duration": 6, "machines": ["M1"]}, {"id": "O2", "duration": 8, "machines": ["M2"]}]},
+    {"id": "J08", "due": 45, "operations": [{"id": "O1", "duration": 4, "machines": ["M1"]}, {"id": "O2", "duration": 7, "machines": ["M3"]}]},
+    {"id": "J09", "due": 48, "operations": [{"id": "O1", "duration": 6, "machines": ["M2"]}, {"id": "O2", "duration": 4, "machines": ["M3"]}]},
+    {"id": "J10", "due": 52, "operations": [{"id": "O1", "duration": 8, "machines": ["M1"]}, {"id": "O2", "duration": 5, "machines": ["M2", "M3"]}]},
+    {"id": "J11", "due": 55, "operations": [{"id": "O1", "duration": 5, "machines": ["M1"]}, {"id": "O2", "duration": 7, "machines": ["M2"]}]},
+    {"id": "J12", "due": 59, "operations": [{"id": "O1", "duration": 6, "machines": ["M1"]}, {"id": "O2", "duration": 6, "machines": ["M3"]}]},
+    {"id": "J13", "due": 62, "operations": [{"id": "O1", "duration": 4, "machines": ["M2"]}, {"id": "O2", "duration": 7, "machines": ["M3"]}]},
+    {"id": "J14", "due": 66, "operations": [{"id": "O1", "duration": 6, "machines": ["M1"]}, {"id": "O2", "duration": 6, "machines": ["M2"]}]},
+    {"id": "J15", "due": 70, "operations": [{"id": "O1", "duration": 7, "machines": ["M1"]}, {"id": "O2", "duration": 7, "machines": ["M2", "M3"]}]},
+    {"id": "J16", "due": 74, "operations": [{"id": "O1", "duration": 5, "machines": ["M2"]}, {"id": "O2", "duration": 8, "machines": ["M3"]}]},
+    {"id": "J17", "due": 78, "operations": [{"id": "O1", "duration": 4, "machines": ["M1"]}, {"id": "O2", "duration": 5, "machines": ["M2"]}]},
+    {"id": "J18", "due": 83, "operations": [{"id": "O1", "duration": 6, "machines": ["M1"]}, {"id": "O2", "duration": 5, "machines": ["M3"]}]},
+    {"id": "J19", "due": 87, "operations": [{"id": "O1", "duration": 7, "machines": ["M1"]}, {"id": "O2", "duration": 9, "machines": ["M2"]}]},
+    {"id": "J20", "due": 92, "operations": [{"id": "O1", "duration": 5, "machines": ["M2"]}, {"id": "O2", "duration": 6, "machines": ["M3"]}]}
+  ]
+}
